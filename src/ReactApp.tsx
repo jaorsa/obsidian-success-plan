@@ -189,7 +189,6 @@ export default function ReactApp(settings: any) {
         }
       }
     }
-
     setSPItems(files);
   }
 
@@ -225,7 +224,7 @@ export default function ReactApp(settings: any) {
       file: file
      };
     
-    //console.log('file path:', file.path);
+    // console.log('file path:', file.path);
 
     let itemContent = await vault.cachedRead(file);
 
@@ -339,6 +338,7 @@ export default function ReactApp(settings: any) {
   function getValueFromStreamOrDateStr(text: string): any {
     let result: string | any;
     let secondHalf = text.split('::')[1].trim();
+    let streamArray, item, streamItems = [];
     
     if (text.includes('Date')) {
 
@@ -348,9 +348,15 @@ export default function ReactApp(settings: any) {
         result = secondHalf;
       }
     } else { // Upstream/Downstream
-      result = "";
+      if (secondHalf.length > 1){
+        streamArray = secondHalf.split(',');
+        while (streamArray.length > 0){
+          item = streamArray.shift();
+          streamItems.push(item);
+        }
+      }
+      result =  (secondHalf.length == 1) ? secondHalf : streamItems; 
     }
-    
     return result;
   }
 
@@ -424,7 +430,7 @@ export default function ReactApp(settings: any) {
         .setIcon("pencil")
         .onClick(async () => {
           //new Notice("Edit");
-          new ItemModal(this.app, dateFormat, 'EDIT', successPlanItem, async (result) => {
+          new ItemModal(this.app, dateFormat, successPlanItems, 'EDIT', successPlanItem, async (result) => {
             new Notice(`Updated File: ${result.type} - ${result.name}`);
             //console.log('Outputted SuccessPlanItem:', result);
             if (result.name_was_edited) {
@@ -603,7 +609,7 @@ export default function ReactApp(settings: any) {
     let properties: string = "Type:: \#type/" + lowercaseAndReplaceSep(successPlanItem.type, ' ', '-') + "\n\n" + 
     "Description:: " + (isNotBlankOrUndefined(successPlanItem.description) ? successPlanItem.description : "") + "\n\n" +
     "Share with Family:: " + (isNotBlankOrUndefined(successPlanItem.share_with_family) ? ("\#share-with-family/" + (successPlanItem.share_with_family === 'True' ? 'true' : 'false')) : "") + "\n\n" +
-    "Upstream:: " + (isNotBlankOrUndefined(successPlanItem.upstream) ? ("[[" + successPlanItem.upstream + "]]") : "") + "\n\n" +
+    "Upstream:: " + (isNotBlankOrUndefined(successPlanItem.upstream) ? successPlanItem.upstream : "") + "\n\n" +
     "Downstream:: " + (isNotBlankOrUndefined(successPlanItem.downstream) ? ("[[" + successPlanItem.downstream + "]]") : "") + "\n\n" +
     "Impact:: " + (isNotBlankOrUndefined(successPlanItem.impact) ? ("\#impact/" + lowercaseAndReplaceSep(successPlanItem.impact, ' ', '-')) : "") + "\n\n" +
     "Status:: " + (isNotBlankOrUndefined(successPlanItem.status) ? ("\#status/" + lowercaseAndReplaceSep(successPlanItem.status, ' ', '-')) : "") + "\n\n" +
@@ -646,8 +652,7 @@ export default function ReactApp(settings: any) {
      };
 
     const { dateFormat } = settings.settings;
-
-    new ItemModal(this.app, dateFormat, 'CREATE', defaultItem, async (result) => {
+    new ItemModal(this.app, dateFormat, successPlanItems, 'CREATE', defaultItem, async (result) => {
       new Notice(`New ${result.type} Created`);
       //console.log('Outputted SuccessPlanItem:', result); 
       await createSuccessPlanItem(result);
